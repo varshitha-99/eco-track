@@ -1,0 +1,2306 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoTrack - AI Sustainability Companion</title>
+    <meta name="description"
+        content="EcoTrack is an AI-powered sustainability companion that helps you track your carbon footprint, scan receipts, curate a digital wardrobe, and cultivate eco-friendly habits.">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..700;1,9..144,400..600&family=Karla:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Space+Mono:wght@400;700&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --eco-green: #5B7C4E;
+            --eco-green-hover: #475F3D;
+            --eco-green-bg: #E8EFDF;
+            --eco-leaf: #93A86E;
+            --eco-sky: #5C7E96;
+            --eco-amber: #BE8A3D;
+            --eco-coral: #B85C40;
+
+            --eco-bg: #EFE8D8;
+            --eco-surface: #FBF7EE;
+            --eco-border: #DDD2BA;
+            --eco-text: #2D2A22;
+            --eco-muted: #837A68;
+
+            --font-display: 'Fraunces', serif;
+            --font-body: 'Karla', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+
+            --border-radius-lg: 10px;
+            --border-radius-md: 7px;
+            --border-radius-sm: 5px;
+            --r: var(--border-radius-lg);
+
+            --shadow-sm: 0 1px 2px 0 rgba(45, 38, 22, 0.06);
+            --shadow-md: 0 3px 8px -2px rgba(45, 38, 22, 0.12), 0 1px 3px -1px rgba(45, 38, 22, 0.06);
+            --shadow-lg: 0 12px 28px -8px rgba(45, 38, 22, 0.22), 0 4px 8px -2px rgba(45, 38, 22, 0.08);
+        }
+
+        body.dark {
+            --eco-bg: #1C211C;
+            --eco-surface: #262C24;
+            --eco-border: #3A4136;
+            --eco-text: #ECE6D6;
+            --eco-muted: #9CA28F;
+            --eco-green: #93A86E;
+            --eco-green-hover: #A6BA82;
+            --eco-green-bg: rgba(147, 168, 110, 0.14);
+        }
+
+        html,
+        body {
+            min-height: 100%;
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--eco-bg);
+            color: var(--eco-text);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            transition: background-color 0.3s, color 0.3s;
+            position: relative;
+        }
+
+        /* Ambient animated background */
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* Respect reduced motion: freeze the canvas animation */
+        @media (prefers-reduced-motion: reduce) {
+            #bg-canvas {
+                display: none;
+            }
+        }
+
+        #bg-texture {
+            position: fixed;
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+            background:
+                repeating-linear-gradient(180deg, transparent 0 31px, rgba(91, 124, 78, 0.05) 31px 32px),
+                radial-gradient(circle at 12% 8%, rgba(91, 124, 78, 0.10) 0%, rgba(239, 232, 216, 0) 55%);
+            transition: opacity 0.3s;
+        }
+
+        body.dark #bg-texture {
+            background:
+                repeating-linear-gradient(180deg, transparent 0 31px, rgba(147, 168, 110, 0.05) 31px 32px),
+                radial-gradient(circle at 12% 8%, rgba(147, 168, 110, 0.07) 0%, rgba(28, 33, 28, 0) 55%);
+        }
+
+        .app-shell {
+            max-width: 680px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            transition: background-color 0.3s, border-color 0.3s;
+            position: relative;
+            z-index: 1;
+        }
+
+        body.dark .app-shell {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Skip link for keyboard users */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: var(--eco-green);
+            color: #fff;
+            padding: 8px 16px;
+            border-radius: 0 0 var(--border-radius-md) 0;
+            font-size: 13px;
+            font-weight: 600;
+            z-index: 9999;
+            transition: top 0.2s;
+        }
+
+        .skip-link:focus {
+            top: 0;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 2px;
+            border-bottom: 1px solid var(--eco-border);
+            padding: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+            transition: border-color 0.3s;
+        }
+
+        .nav-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-tab {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 9px 12px 8px;
+            cursor: pointer;
+            white-space: nowrap;
+            color: var(--eco-muted);
+            border: none;
+            border-bottom: 2px solid transparent;
+            background: transparent;
+            margin-bottom: -1px;
+            transition: all 0.2s;
+        }
+
+        .nav-tab[aria-selected="true"] {
+            color: var(--eco-green);
+            border-bottom: 2px solid var(--eco-green);
+        }
+
+        .nav-tab:hover:not([aria-selected="true"]) {
+            color: var(--eco-text);
+        }
+
+        .nav-tab:focus-visible {
+            outline: 2px solid var(--eco-green);
+            outline-offset: 2px;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .card {
+            background: var(--eco-surface);
+            border: 0.5px solid var(--eco-border);
+            border-radius: var(--r);
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+            transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-green {
+            background: #E8EFDF;
+            border-color: #C3D4AC;
+        }
+
+        body.dark .card-green {
+            background: rgba(147, 168, 110, 0.14);
+            border-color: rgba(147, 168, 110, 0.3);
+        }
+
+        .card-teal {
+            background: #E5EEE6;
+            border-color: #BFD7C2;
+        }
+
+        body.dark .card-teal {
+            background: rgba(110, 150, 130, 0.14);
+            border-color: rgba(110, 150, 130, 0.3);
+        }
+
+        .card-sky {
+            background: #E6EDF1;
+            border-color: #BCD0DA;
+        }
+
+        body.dark .card-sky {
+            background: rgba(150, 196, 229, 0.16);
+            border-color: rgba(92, 126, 150, 0.32);
+        }
+
+        .card-amber {
+            background: #F4E9D6;
+            border-color: #E0C291;
+        }
+
+        body.dark .card-amber {
+            background: rgba(190, 138, 61, 0.16);
+            border-color: rgba(190, 138, 61, 0.32);
+        }
+
+        .card-coral {
+            background: #F2E2D9;
+            border-color: #DBB1A0;
+        }
+
+        body.dark .card-coral {
+            background: rgba(184, 92, 64, 0.16);
+            border-color: rgba(184, 92, 64, 0.32);
+        }
+
+        .sec-label {
+            font-family: var(--font-mono);
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--eco-muted);
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px dashed var(--eco-border);
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .metric-card {
+            background: var(--eco-surface);
+            border: 0.5px solid var(--eco-border);
+            border-radius: var(--border-radius-md);
+            padding: 14px;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--eco-muted);
+            margin-bottom: 6px;
+        }
+
+        .metric-val {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--eco-text);
+            line-height: 1.1;
+        }
+
+        .metric-unit {
+            font-size: 11px;
+            color: var(--eco-muted);
+            margin-top: 4px;
+        }
+
+        .score-ring-wrap {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            padding: 4px 0;
+        }
+
+        .score-ring {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            flex-shrink: 0;
+        }
+
+        .score-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .score-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-num {
+            font-family: var(--font-display);
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--eco-text);
+            line-height: 1;
+        }
+
+        .score-sub {
+            font-size: 10px;
+            color: var(--eco-muted);
+        }
+
+        .ai-tip {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 12px 14px;
+            background: var(--eco-bg);
+            border-radius: var(--border-radius-md);
+            margin-bottom: 10px;
+            transition: background-color 0.3s;
+        }
+
+        .ai-tip:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--eco-green);
+            margin-top: 6px;
+            flex-shrink: 0;
+        }
+
+        .ai-text {
+            font-size: 13px;
+            color: var(--eco-text);
+            line-height: 1.5;
+        }
+
+        .act-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 0.5px solid var(--eco-border);
+            transition: border-color 0.3s;
+        }
+
+        .act-row:last-child {
+            border-bottom: none;
+        }
+
+        .act-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 18px;
+        }
+
+        .act-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .act-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--eco-text);
+        }
+
+        .act-sub {
+            font-size: 12px;
+            color: var(--eco-muted);
+            margin-top: 2px;
+        }
+
+        .act-co2 {
+            font-family: var(--font-display);
+            font-size: 13px;
+            color: var(--eco-coral);
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .badge-green {
+            background: #C0DD97;
+            color: #27500A;
+        }
+
+        body.dark .badge-green {
+            background: rgba(99, 153, 34, 0.25);
+            color: #C0DD97;
+        }
+
+        .badge-amber {
+            background: #FAC775;
+            color: #633806;
+        }
+
+        body.dark .badge-amber {
+            background: rgba(186, 117, 23, 0.25);
+            color: #FAC775;
+        }
+
+        .badge-coral {
+            background: #F5C4B3;
+            color: #712B13;
+        }
+
+        body.dark .badge-coral {
+            background: rgba(216, 90, 48, 0.25);
+            color: #F5C4B3;
+        }
+
+        .badge-sky {
+            background: #B5D4F4;
+            color: #0C447C;
+        }
+
+        body.dark .badge-sky {
+            background: rgba(55, 138, 221, 0.25);
+            color: #B5D4F4;
+        }
+
+        .badge-teal {
+            background: #9FE1CB;
+            color: #085041;
+        }
+
+        body.dark .badge-teal {
+            background: rgba(29, 158, 117, 0.25);
+            color: #9FE1CB;
+        }
+
+        .prog-bar {
+            height: 6px;
+            background: var(--eco-bg);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .prog-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: var(--eco-green);
+            transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .streak-dots {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .s-dot {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .s-done {
+            background: #C0DD97;
+            color: #27500A;
+        }
+
+        body.dark .s-done {
+            background: rgba(99, 153, 34, 0.3);
+            color: #C0DD97;
+        }
+
+        .s-active {
+            background: var(--eco-green);
+            color: #fff;
+            transform: scale(1.1);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+        }
+
+        .s-empty {
+            background: var(--eco-bg);
+            color: var(--eco-muted);
+            border: 0.5px solid var(--eco-border);
+        }
+
+        .lb-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 0;
+            border-bottom: 0.5px solid var(--eco-border);
+            transition: all 0.25s;
+        }
+
+        .lb-row:last-child {
+            border-bottom: none;
+        }
+
+        .lb-rank {
+            font-family: var(--font-display);
+            font-size: 13px;
+            font-weight: 700;
+            width: 20px;
+            color: var(--eco-muted);
+        }
+
+        .lb-rank.top {
+            color: var(--eco-green);
+        }
+
+        .lb-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .lb-name {
+            flex: 1;
+            font-size: 14px;
+            color: var(--eco-text);
+        }
+
+        .lb-score {
+            font-family: var(--font-display);
+            font-size: 13px;
+            color: var(--eco-text);
+            font-weight: 600;
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+
+        /* Toggle buttons that act as radio-group options */
+        .toggle-btn {
+            font-size: 12px;
+            padding: 6px 13px;
+            border-radius: 20px;
+            border: 0.5px solid var(--eco-border);
+            background: var(--eco-surface);
+            cursor: pointer;
+            color: var(--eco-muted);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .toggle-btn:hover {
+            color: var(--eco-text);
+            border-color: var(--eco-muted);
+        }
+
+        .toggle-btn[aria-pressed="true"] {
+            background: var(--eco-green-bg);
+            border-color: var(--eco-green);
+            color: var(--eco-green);
+            font-weight: 600;
+        }
+
+        /* Legacy .sel still needed for leaderboard tab buttons */
+        .toggle-btn.sel {
+            background: var(--eco-green-bg);
+            border-color: var(--eco-green);
+            color: var(--eco-green);
+            font-weight: 600;
+        }
+
+        .toggle-btn:focus-visible {
+            outline: 2px solid var(--eco-green);
+            outline-offset: 2px;
+        }
+
+        .input-plain:focus-visible {
+            outline: 2px solid var(--eco-green);
+            outline-offset: 2px;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .chat-bubble {
+            padding: 10px 14px;
+            border-radius: var(--r);
+            font-size: 13px;
+            line-height: 1.5;
+            max-width: 85%;
+            word-wrap: break-word;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .chat-user {
+            background: var(--eco-green-bg);
+            color: var(--eco-text);
+            margin-left: auto;
+            border-bottom-right-radius: 4px;
+            border-left: 2px solid var(--eco-green);
+        }
+
+        .chat-bot {
+            background: var(--eco-bg);
+            color: var(--eco-text);
+            border-bottom-left-radius: 4px;
+            border-left: 2px solid var(--eco-sky);
+        }
+
+        .chat-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .chat-label {
+            font-size: 11px;
+            color: var(--eco-muted);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+
+        .cta-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 9px 18px;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-family: var(--font-body);
+            text-decoration: none;
+        }
+
+        .cta-btn:focus-visible {
+            outline: 2px solid var(--eco-green);
+            outline-offset: 2px;
+        }
+
+        .cta-primary {
+            background: var(--eco-green);
+            color: #fff;
+        }
+
+        .cta-primary:hover {
+            background: var(--eco-green-hover);
+            transform: translateY(-1px);
+        }
+
+        .cta-outline {
+            background: transparent;
+            color: var(--eco-text);
+            border: 0.5px solid var(--eco-border);
+        }
+
+        .cta-outline:hover {
+            background: var(--eco-bg);
+        }
+
+        .upload-zone {
+            border: 1.5px dashed var(--eco-green);
+            border-radius: var(--r);
+            padding: 32px;
+            text-align: center;
+            background: var(--eco-green-bg);
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+
+        .upload-zone:hover,
+        .upload-zone:focus-visible {
+            background: rgba(16, 185, 129, 0.08);
+            transform: scale(0.99);
+            outline: 2px solid var(--eco-green);
+            outline-offset: 2px;
+        }
+
+        .upload-zone i {
+            font-size: 32px;
+            color: var(--eco-green);
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .wardrobe-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        /* Wardrobe items are now <button> elements */
+        .wardrobe-item {
+            background: var(--eco-bg);
+            border: 0.5px solid var(--eco-border);
+            border-radius: var(--border-radius-md);
+            padding: 12px 8px;
+            text-align: center;
+            transition: all 0.2s;
+            font-family: var(--font-body);
+            cursor: pointer;
+            width: 100%;
+        }
+
+        .wardrobe-item:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--eco-muted);
+        }
+
+        .wardrobe-item:focus-visible {
+            outline: 2px solid var(--eco-green);
+            outline-offset: 2px;
+        }
+
+        .wardrobe-emoji {
+            font-size: 28px;
+            margin-bottom: 6px;
+        }
+
+        .wardrobe-name {
+            font-size: 11px;
+            color: var(--eco-muted);
+            font-weight: 500;
+        }
+
+        .wardrobe-worn {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--eco-green);
+            margin-top: 3px;
+        }
+
+        .forecast-bar-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .fbar-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .fbar-label {
+            font-size: 12px;
+            color: var(--eco-muted);
+            width: 90px;
+            flex-shrink: 0;
+            font-weight: 500;
+        }
+
+        .fbar-track {
+            flex: 1;
+            height: 8px;
+            background: var(--eco-bg);
+            border-radius: 4px;
+            overflow: hidden;
+            transition: background-color 0.3s;
+        }
+
+        .fbar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s ease;
+        }
+
+        .fbar-val {
+            font-size: 12px;
+            font-weight: 600;
+            width: 80px;
+            text-align: right;
+            color: var(--eco-text);
+        }
+
+        .product-compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .product-card {
+            border: 0.5px solid var(--eco-border);
+            background: var(--eco-surface);
+            border-radius: var(--r);
+            padding: 14px;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .product-card.better {
+            border-color: var(--eco-green);
+            background: var(--eco-green-bg);
+        }
+
+        .product-score-ring {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            margin: 8px 0 4px;
+        }
+
+        /* Streak action rows are now <button> elements */
+        .streak-action-btn {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border: none;
+            border-bottom: 0.5px solid var(--eco-border);
+            background: transparent;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            font-family: var(--font-body);
+            transition: border-color 0.3s;
+        }
+
+        .streak-action-btn:last-child {
+            border-bottom: none;
+        }
+
+        .streak-action-btn:focus-visible {
+            outline: 2px solid var(--eco-green);
+            outline-offset: 2px;
+            border-radius: var(--border-radius-sm);
+        }
+
+        .streak-action-btn:hover {
+            background: var(--eco-bg);
+            border-radius: var(--border-radius-sm);
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+        }
+
+        @keyframes bounce {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-4px);
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+    <div id="bg-texture" aria-hidden="true"></div>
+
+    <div id="toast-container" aria-live="polite" aria-atomic="false"
+        style="position: fixed; bottom: 20px; right: 20px; z-index: 1000; display: flex; flex-direction: column; gap: 8px;">
+    </div>
+
+    <div class="app-shell" id="main-content">
+        <!-- App header -->
+        <header
+            style="display:flex;align-items:center;gap:10px;padding:0 0 14px;border-bottom:0.5px solid var(--eco-border);margin-bottom:14px">
+            <div style="width:34px;height:34px;border-radius:50%;background:var(--eco-green-bg);display:flex;align-items:center;justify-content:center"
+                aria-hidden="true">
+                <i class="ti ti-leaf" style="font-size:18px;color:var(--eco-green)"></i>
+            </div>
+            <div>
+                <h1 style="font-family:var(--font-display);font-size:15px;font-weight:700;color:var(--eco-text)">
+                    EcoTrack</h1>
+                <p style="font-size:11px;color:var(--eco-muted)">AI Sustainability Companion</p>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+                <span class="badge badge-green"><i class="ti ti-flame" style="font-size:13px"
+                        aria-hidden="true"></i><span id="header-streak-days">7</span> day streak</span>
+                <button id="theme-toggle" class="cta-btn cta-outline"
+                    style="padding:6px 10px;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;margin:0;"
+                    aria-label="Toggle dark mode"><i class="ti ti-moon" style="font-size:14px;"
+                        aria-hidden="true"></i></button>
+            </div>
+        </header>
+
+        <!-- Nav -->
+        <nav aria-label="App sections">
+            <div class="nav-tabs" role="tablist" style="margin-bottom:16px">
+                <button class="nav-tab" role="tab" aria-selected="true" aria-controls="screen-dashboard"
+                    onclick="showScreen('dashboard', this)">Dashboard</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-activity"
+                    onclick="showScreen('activity', this)">Activity</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-receipt"
+                    onclick="showScreen('receipt', this)">Receipt</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-shopping"
+                    onclick="showScreen('shopping', this)">Shopping</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-wardrobe"
+                    onclick="showScreen('wardrobe', this)">Wardrobe</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-chatbot"
+                    onclick="showScreen('chatbot', this)">Chatbot</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-forecast"
+                    onclick="showScreen('forecast', this)">Forecast</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-streaks"
+                    onclick="showScreen('streaks', this)">Streaks</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-leaderboard"
+                    onclick="showScreen('leaderboard', this)">Leaderboard</button>
+                <button class="nav-tab" role="tab" aria-selected="false" aria-controls="screen-register"
+                    onclick="showScreen('register', this)">Profile</button>
+            </div>
+        </nav>
+
+        <!-- DASHBOARD -->
+        <section id="screen-dashboard" class="screen active" role="tabpanel" aria-label="Dashboard">
+            <div class="score-ring-wrap card card-teal">
+                <div class="score-ring" role="img" aria-label="Eco score ring">
+                    <svg width="80" height="80" viewBox="0 0 80 80" aria-hidden="true">
+                        <circle cx="40" cy="40" r="32" fill="none" stroke="var(--eco-border)" stroke-width="7" />
+                        <circle id="score-ring-fill" cx="40" cy="40" r="32" fill="none" stroke="var(--eco-green)"
+                            stroke-width="7" stroke-dasharray="201" stroke-dashoffset="44" stroke-linecap="round" />
+                    </svg>
+                    <div class="score-center"><span class="score-num" id="score-num-text">78</span><span
+                            class="score-sub">/100</span></div>
+                </div>
+                <div>
+                    <h2 style="font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--eco-text)">Eco
+                        Score</h2>
+                    <p id="score-feedback" style="font-size:13px;color:var(--eco-muted);margin-top:4px">Good progress
+                        this month</p>
+                    <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap"><span class="badge badge-teal">Top
+                            22% of users</span><span class="badge badge-green">-8% vs last month</span></div>
+                </div>
+            </div>
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Carbon footprint</div>
+                    <div class="metric-val" id="monthly-co2-val">145</div>
+                    <div class="metric-unit">kg CO₂ / month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Current streak</div>
+                    <div class="metric-val" style="color:var(--eco-green)"><span id="dash-streak-days">7</span><span
+                            style="font-size:16px" aria-hidden="true">🔥</span></div>
+                    <div class="metric-unit">days in a row</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Challenges done</div>
+                    <div class="metric-val" id="challenges-done-val">12</div>
+                    <div class="metric-unit">this month</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Trees equivalent</div>
+                    <div class="metric-val" style="color:var(--eco-green)" id="trees-saved-val">4.8</div>
+                    <div class="metric-unit">trees saved</div>
+                </div>
+            </div>
+            <div class="card">
+                <h3 class="sec-label">AI recommendations</h3>
+                <div class="ai-tip">
+                    <div class="ai-dot" aria-hidden="true"></div>
+                    <p class="ai-text">You drive 20 km daily. Switching to public transport twice a week could reduce
+                        your footprint by ~10%.</p>
+                </div>
+                <div class="ai-tip">
+                    <div class="ai-dot" style="background:var(--eco-sky)" aria-hidden="true"></div>
+                    <p class="ai-text">Your energy usage peaks on weekends. Setting AC to 24°C instead of 22°C saves ~6
+                        kg CO₂/month.</p>
+                </div>
+                <div class="ai-tip">
+                    <div class="ai-dot" style="background:var(--eco-leaf)" aria-hidden="true"></div>
+                    <p class="ai-text">You haven't logged any plant-based meals this week. Even 2 veggie days saves ~4
+                        kg CO₂.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ACTIVITY -->
+        <section id="screen-activity" class="screen" role="tabpanel" aria-label="Activity">
+            <div class="card">
+                <h2 class="sec-label">Transportation</h2>
+                <div class="toggle-group" id="transport-sel" role="group" aria-label="Select transport mode">
+                    <button class="toggle-btn" aria-pressed="true" onclick="selectTransport(this, 'Car')"><i
+                            class="ti ti-car" aria-hidden="true"></i>Car</button>
+                    <button class="toggle-btn" aria-pressed="false" onclick="selectTransport(this, 'Bike')"><i
+                            class="ti ti-bike" aria-hidden="true"></i>Bike</button>
+                    <button class="toggle-btn" aria-pressed="false" onclick="selectTransport(this, 'Bus')"><i
+                            class="ti ti-bus" aria-hidden="true"></i>Bus</button>
+                    <button class="toggle-btn" aria-pressed="false" onclick="selectTransport(this, 'Metro')"><i
+                            class="ti ti-train" aria-hidden="true"></i>Metro</button>
+                    <button class="toggle-btn" aria-pressed="false" onclick="selectTransport(this, 'Walking')"><i
+                            class="ti ti-walk" aria-hidden="true"></i>Walking</button>
+                </div>
+                <div style="margin-top:14px;display:flex;gap:12px;align-items:center">
+                    <label for="dist-sl"
+                        style="font-size:12px;color:var(--eco-muted);white-space:nowrap">Distance</label>
+                    <input type="range" min="1" max="60" value="20" id="dist-sl"
+                        style="flex:1; accent-color: var(--eco-green);" oninput="handleDistanceSlider(this.value)"
+                        aria-valuetext="20 kilometres">
+                    <span style="font-size:13px;font-weight:600;color:var(--eco-text);min-width:48px;text-align:right"
+                        id="dist-out" aria-live="polite">20 km</span>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="sec-label">Home energy</h2>
+                <div style="display:flex;flex-direction:column;gap:10px">
+                    <div class="act-row">
+                        <div class="act-icon" style="background:#E6F1FB; color:#185FA5;" aria-hidden="true"><i
+                                class="ti ti-bolt" style="font-size:18px"></i></div>
+                        <div class="act-info">
+                            <div class="act-name">Electricity</div>
+                            <div class="act-sub">Units consumed this month</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px" role="group"
+                            aria-label="Electricity units">
+                            <button onclick="adj('elec',-1)"
+                                style="width:26px;height:26px;border-radius:50%;border:0.5px solid var(--eco-border);background:var(--eco-bg);cursor:pointer;font-size:16px;color:var(--eco-text);display:flex;align-items:center;justify-content:center;"
+                                aria-label="Decrease electricity units">-</button>
+                            <span id="elec"
+                                style="font-family:var(--font-display);font-size:14px;font-weight:700;min-width:28px;text-align:center"
+                                aria-live="polite">85</span>
+                            <button onclick="adj('elec',1)"
+                                style="width:26px;height:26px;border-radius:50%;border:0.5px solid var(--eco-border);background:var(--eco-bg);cursor:pointer;font-size:16px;color:var(--eco-text);display:flex;align-items:center;justify-content:center;"
+                                aria-label="Increase electricity units">+</button>
+                        </div>
+                    </div>
+                    <div class="act-row">
+                        <div class="act-icon" style="background:#FAECE7; color:#993C1D;" aria-hidden="true"><i
+                                class="ti ti-wind" style="font-size:18px"></i></div>
+                        <div class="act-info">
+                            <div class="act-name">AC Usage</div>
+                            <div class="act-sub">Hours per day on average</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:6px" role="group" aria-label="AC usage hours">
+                            <button onclick="adj('ac',-1)"
+                                style="width:26px;height:26px;border-radius:50%;border:0.5px solid var(--eco-border);background:var(--eco-bg);cursor:pointer;font-size:16px;color:var(--eco-text);display:flex;align-items:center;justify-content:center;"
+                                aria-label="Decrease AC hours">-</button>
+                            <span id="ac"
+                                style="font-family:var(--font-display);font-size:14px;font-weight:700;min-width:28px;text-align:center"
+                                aria-live="polite">6</span>
+                            <button onclick="adj('ac',1)"
+                                style="width:26px;height:26px;border-radius:50%;border:0.5px solid var(--eco-border);background:var(--eco-bg);cursor:pointer;font-size:16px;color:var(--eco-text);display:flex;align-items:center;justify-content:center;"
+                                aria-label="Increase AC hours">+</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="sec-label">Food & diet</h2>
+                <div class="toggle-group" id="food-sel" role="group" aria-label="Select diet type">
+                    <button class="toggle-btn" aria-pressed="false" onclick="selectFood(this, 'Vegan')">Vegan</button>
+                    <button class="toggle-btn" aria-pressed="true"
+                        onclick="selectFood(this, 'Vegetarian')">Vegetarian</button>
+                    <button class="toggle-btn" aria-pressed="false"
+                        onclick="selectFood(this, 'Non-veg')">Non-veg</button>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="sec-label">Clothing this week</h2>
+                <div class="toggle-group" id="cloth-sel" role="group" aria-label="Select clothing source">
+                    <button class="toggle-btn" aria-pressed="true"
+                        onclick="selectClothing(this, 'Existing clothes')">Existing clothes</button>
+                    <button class="toggle-btn" aria-pressed="false"
+                        onclick="selectClothing(this, 'Thrifted')">Thrifted</button>
+                    <button class="toggle-btn" aria-pressed="false" onclick="selectClothing(this, 'New purchase')">New
+                        purchase</button>
+                    <button class="toggle-btn" aria-pressed="false"
+                        onclick="selectClothing(this, 'Sustainable brand')">Sustainable brand</button>
+                </div>
+            </div>
+            <div class="card card-green" style="display:flex;align-items:center;justify-content:space-between">
+                <div>
+                    <div style="font-size:13px;color:var(--eco-text);opacity:0.8;font-weight:500">Estimated today</div>
+                    <div style="font-family:var(--font-display);font-size:22px;font-weight:700;color:var(--eco-text)"
+                        id="estimated-today-val" aria-live="polite">15.7 kg CO₂</div>
+                </div>
+                <button class="cta-btn cta-primary"
+                    onclick="sendPrompt('How can I reduce my daily carbon footprint based on my EcoTrack activity?')">Get
+                    tips ↗</button>
+            </div>
+        </section>
+
+        <!-- RECEIPT SCANNER -->
+        <section id="screen-receipt" class="screen" role="tabpanel" aria-label="Receipt scanner">
+            <button class="upload-zone" onclick="simulateReceiptScan()"
+                aria-label="Upload shopping receipt for OCR analysis">
+                <i class="ti ti-scan" aria-hidden="true"></i>
+                <div style="font-size:14px;font-weight:700;color:var(--eco-text)">Upload shopping receipt</div>
+                <div style="font-size:12px;color:var(--eco-muted);margin-top:4px">OCR scans &amp; categorizes
+                    automatically</div>
+                <span class="cta-btn cta-primary" style="margin-top:14px;font-size:12px;pointer-events:none;"
+                    aria-hidden="true"><i class="ti ti-photo-up" style="font-size:14px"></i>Choose photo</span>
+            </button>
+            <div class="card" id="receipt-card">
+                <h2 class="sec-label">Last scanned receipt — 2 Jun 2026</h2>
+                <div id="receipt-list"></div>
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding-top:12px;border-top:0.5px solid var(--eco-border)"
+                    id="receipt-summary"></div>
+            </div>
+        </section>
+
+        <!-- SHOPPING ASSISTANT -->
+        <section id="screen-shopping" class="screen" role="tabpanel" aria-label="Shopping assistant">
+            <div class="card" style="display:flex;gap:8px;align-items:center">
+                <i class="ti ti-barcode" style="font-size:22px;color:var(--eco-muted)" aria-hidden="true"></i>
+                <label for="shopping-search"
+                    style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Search or scan
+                    barcode</label>
+                <input type="text" id="shopping-search" placeholder="Search or scan barcode..." class="input-plain"
+                    style="flex:1;border:none;background:transparent;font-size:14px;color:var(--eco-text)">
+                <button class="cta-btn cta-primary" style="font-size:12px;padding:7px 12px;"
+                    onclick="showToast('Barcode scanning activated. Ready to scan items!', 'success')"><i
+                        class="ti ti-camera" style="font-size:14px" aria-hidden="true"></i>Scan</button>
+            </div>
+            <div class="product-compare" aria-label="Product sustainability comparison">
+                <div class="product-card">
+                    <div style="font-size:11px;color:var(--eco-muted);margin-bottom:4px">Current choice</div>
+                    <h3 style="font-size:14px;font-weight:700;color:var(--eco-text)">Plastic water bottle</h3>
+                    <div class="product-score-ring" style="color:var(--eco-coral)"
+                        aria-label="Sustainability score: 35 out of 100">35</div>
+                    <div style="font-size:11px;color:var(--eco-muted)">/100 sustainability</div>
+                    <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
+                        <div style="display:flex;justify-content:space-between;font-size:12px"><span
+                                style="color:var(--eco-muted)">Packaging</span><span class="badge badge-coral"
+                                style="font-size:10px">Poor</span></div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px"><span
+                                style="color:var(--eco-muted)">Carbon</span><span
+                                style="color:var(--eco-coral);font-weight:600">2.1 kg CO₂</span></div>
+                    </div>
+                </div>
+                <div class="product-card better">
+                    <div style="font-size:11px;color:var(--eco-green);font-weight:700;margin-bottom:4px">Recommended
+                    </div>
+                    <h3 style="font-size:14px;font-weight:700;color:var(--eco-text)">Reusable steel bottle</h3>
+                    <div class="product-score-ring" style="color:var(--eco-green)"
+                        aria-label="Sustainability score: 90 out of 100">90</div>
+                    <div style="font-size:11px;color:var(--eco-muted)">/100 sustainability</div>
+                    <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
+                        <div style="display:flex;justify-content:space-between;font-size:12px"><span
+                                style="color:var(--eco-muted)">Packaging</span><span class="badge badge-green"
+                                style="font-size:10px">Great</span></div>
+                        <div style="display:flex;justify-content:space-between;font-size:12px"><span
+                                style="color:var(--eco-muted)">Carbon</span><span
+                                style="color:var(--eco-green);font-weight:600">0.3 kg CO₂</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="card card-teal" style="display:flex;align-items:center;justify-content:space-between">
+                <div style="font-size:13px;color:var(--eco-text)">Switching saves <strong>1.8 kg CO₂</strong> per
+                    purchase</div>
+                <button class="cta-btn cta-primary" style="font-size:12px"
+                    onclick="sendPrompt('Find eco-friendly alternatives for everyday household products')">Explore more
+                    ↗</button>
+            </div>
+        </section>
+
+        <!-- WARDROBE -->
+        <section id="screen-wardrobe" class="screen" role="tabpanel" aria-label="Digital wardrobe">
+            <div class="card">
+                <h2 class="sec-label">Your digital wardrobe</h2>
+                <div id="add-item-form"
+                    style="display:none; padding:12px; border:0.5px solid var(--eco-border); border-radius:var(--border-radius-md); background:var(--eco-bg); margin-bottom:12px; gap:8px; flex-direction:column;">
+                    <h3 style="font-size:12px; font-weight:700; color:var(--eco-text);">Add new clothing item</h3>
+                    <div style="display:flex; gap:8px;">
+                        <label for="new-item-emoji"
+                            style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Clothing
+                            emoji</label>
+                        <select id="new-item-emoji" class="input-plain"
+                            style="border:0.5px solid var(--eco-border); border-radius:var(--border-radius-sm); padding:6px; background:var(--eco-surface); color:var(--eco-text); font-size:16px;">
+                            <option>👕</option>
+                            <option>👖</option>
+                            <option>👗</option>
+                            <option>🧥</option>
+                            <option>👟</option>
+                            <option>🎩</option>
+                            <option>🧣</option>
+                            <option>🎒</option>
+                        </select>
+                        <label for="new-item-name"
+                            style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Item
+                            name</label>
+                        <input type="text" id="new-item-name" placeholder="e.g. Red sweater" class="input-plain"
+                            style="flex:1; border:0.5px solid var(--eco-border); border-radius:var(--border-radius-sm); padding:6px 10px; background:var(--eco-surface); color:var(--eco-text); font-size:12px;">
+                    </div>
+                    <div style="display:flex; justify-content:flex-end; gap:6px; margin-top:4px;">
+                        <button class="cta-btn cta-outline" style="font-size:11px; padding:5px 10px;"
+                            onclick="toggleAddWardrobeForm(false)">Cancel</button>
+                        <button class="cta-btn cta-primary" style="font-size:11px; padding:5px 10px;"
+                            onclick="saveNewWardrobeItem()">Add item</button>
+                    </div>
+                </div>
+                <div class="wardrobe-grid" id="wardrobe-grid-items" role="list" aria-label="Wardrobe items"></div>
+            </div>
+            <div class="card card-green">
+                <h2 class="sec-label" style="color:var(--eco-text)">AI outfit suggestions</h2>
+                <div class="act-row">
+                    <div style="font-size:20px" aria-hidden="true">✨</div>
+                    <div class="act-info">
+                        <div class="act-name" style="color:var(--eco-text); font-weight: 600;">Casual day out</div>
+                        <div class="act-sub">White tee + Blue jeans + White sneakers</div>
+                    </div><span class="badge badge-green">0 CO₂</span>
+                </div>
+                <div class="act-row">
+                    <div style="font-size:20px" aria-hidden="true">✨</div>
+                    <div class="act-info">
+                        <div class="act-name" style="color:var(--eco-text); font-weight: 600;">Weekend brunch</div>
+                        <div class="act-sub">Floral dress + White sneakers</div>
+                    </div><span class="badge badge-green">0 CO₂</span>
+                </div>
+                <div class="act-row" style="border-bottom:none">
+                    <div style="font-size:20px" aria-hidden="true">✨</div>
+                    <div class="act-info">
+                        <div class="act-name" style="color:var(--eco-text); font-weight: 600;">Evening casual</div>
+                        <div class="act-sub">White tee + Denim jacket + Blue jeans</div>
+                    </div><span class="badge badge-green">0 CO₂</span>
+                </div>
+            </div>
+            <div class="card">
+                <div style="display:flex; align-items:center; justify-content:space-between">
+                    <div>
+                        <h2 style="font-size:13px;font-weight:700;color:var(--eco-text)">Outfit repeat reward</h2>
+                        <p style="font-size:12px;color:var(--eco-muted);margin-top:3px">Repeat outfits to earn the
+                            Planet Protector badge</p>
+                    </div>
+                    <span class="badge badge-amber" id="wardrobe-repeat-count" aria-live="polite">6/10</span>
+                </div>
+                <div class="prog-bar">
+                    <div class="prog-fill" id="wardrobe-repeat-fill" style="width:60%; background:var(--eco-amber)">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CHATBOT -->
+        <section id="screen-chatbot" class="screen" role="tabpanel" aria-label="EcoBot chat">
+            <div class="card"
+                style="padding:14px; max-height: 350px; overflow-y: auto; display: flex; flex-direction: column;"
+                id="chat-container" aria-label="Chat conversation" role="log" aria-live="polite">
+                <div class="chat-wrap" id="chat-messages">
+                    <div>
+                        <div class="chat-label">EcoBot</div>
+                        <div class="chat-bubble chat-bot">Hi! I'm your AI sustainability assistant. Ask me anything
+                            about your carbon footprint or eco habits.</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="chat-label" style="text-align:right">You</div>
+                        <div class="chat-bubble chat-user">Is taking the bus better than driving?</div>
+                    </div>
+                    <div>
+                        <div class="chat-label">EcoBot</div>
+                        <div class="chat-bubble chat-bot">Based on your 20 km daily commute, switching to the bus
+                            reduces CO₂ by ~4.8 kg/day — that's 120 kg saved per month. Even twice a week is a
+                            meaningful difference.</div>
+                    </div>
+                    <div style="text-align:right">
+                        <div class="chat-label" style="text-align:right">You</div>
+                        <div class="chat-bubble chat-user">Is thrift shopping eco-friendly?</div>
+                    </div>
+                    <div>
+                        <div class="chat-label">EcoBot</div>
+                        <div class="chat-bubble chat-bot">Absolutely. Buying secondhand avoids ~4-7 kg CO₂ per item vs.
+                            fast fashion. Your wardrobe scan shows 2 rarely-worn items — consider swapping or donating
+                            them.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="display:flex; gap:8px; align-items:center; padding:10px 14px;">
+                <label for="chat-input"
+                    style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)">Message to
+                    EcoBot</label>
+                <input type="text" id="chat-input" placeholder="Ask EcoBot anything..." class="input-plain"
+                    style="flex:1; border:none; background:transparent; font-size:13px; color:var(--eco-text);"
+                    onkeydown="if(event.key==='Enter') sendChat()">
+                <button class="cta-btn cta-primary" style="padding: 8px 12px; border-radius: var(--border-radius-sm);"
+                    onclick="sendChat()" aria-label="Send message"><i class="ti ti-send"
+                        aria-hidden="true"></i></button>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:7px" role="group" aria-label="Quick chat prompts">
+                <button class="cta-btn cta-outline" style="font-size:11px; padding: 6px 12px;"
+                    onclick="sendPrompt('How can I reduce my carbon footprint this week based on my EcoTrack data?')">Reduce
+                    my footprint ↗</button>
+                <button class="cta-btn cta-outline" style="font-size:11px; padding: 6px 12px;"
+                    onclick="sendPrompt('What are the most sustainable food choices I can make daily?')">Sustainable
+                    food tips ↗</button>
+                <button class="cta-btn cta-outline" style="font-size:11px; padding: 6px 12px;"
+                    onclick="sendPrompt('Explain how my EcoScore is calculated')">How is my EcoScore calculated
+                    ↗</button>
+            </div>
+        </section>
+
+        <!-- ML FORECAST -->
+        <section id="screen-forecast" class="screen" role="tabpanel" aria-label="ML forecast">
+            <div class="metric-grid">
+                <div class="metric-card">
+                    <div class="metric-label">Current month</div>
+                    <div class="metric-val" id="forecast-current-val">145</div>
+                    <div class="metric-unit">kg CO₂</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">ML prediction</div>
+                    <div class="metric-val" style="color:var(--eco-coral)" id="forecast-val">160</div>
+                    <div class="metric-unit">kg CO₂ next month</div>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="sec-label">Emission sources breakdown</h2>
+                <div class="forecast-bar-wrap">
+                    <div class="fbar-row" id="forecast-bar-trans">
+                        <div class="fbar-label">Transportation</div>
+                        <div class="fbar-track" role="progressbar" aria-label="Transportation share">
+                            <div class="fbar-fill" style="width:52%;background:var(--eco-coral)"></div>
+                        </div>
+                        <div class="fbar-val">52% · 75 kg</div>
+                    </div>
+                    <div class="fbar-row" id="forecast-bar-energy">
+                        <div class="fbar-label">Home energy</div>
+                        <div class="fbar-track" role="progressbar" aria-label="Home energy share">
+                            <div class="fbar-fill" style="width:26%;background:var(--eco-sky)"></div>
+                        </div>
+                        <div class="fbar-val">26% · 38 kg</div>
+                    </div>
+                    <div class="fbar-row" id="forecast-bar-food">
+                        <div class="fbar-label">Food</div>
+                        <div class="fbar-track" role="progressbar" aria-label="Food share">
+                            <div class="fbar-fill" style="width:14%;background:var(--eco-green)"></div>
+                        </div>
+                        <div class="fbar-val">14% · 20 kg</div>
+                    </div>
+                    <div class="fbar-row" id="forecast-bar-cloth">
+                        <div class="fbar-label">Clothing</div>
+                        <div class="fbar-track" role="progressbar" aria-label="Clothing share">
+                            <div class="fbar-fill" style="width:8%;background:var(--eco-amber)"></div>
+                        </div>
+                        <div class="fbar-val">8% · 12 kg</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card card-coral">
+                <h2 style="font-size:13px;font-weight:700;color:var(--eco-text)">ML insight</h2>
+                <p style="font-size:13px;color:var(--eco-text);margin-top:6px;line-height:1.55; opacity: 0.9;">Your
+                    biggest source is transportation. Using public transport just twice a week could bring next month's
+                    forecast down significantly.</p>
+                <button class="cta-btn" style="background:var(--eco-coral);color:#fff;font-size:12px;margin-top:12px"
+                    onclick="sendPrompt('Give me a personalized 30-day plan to reduce my carbon footprint by 15%')">Get
+                    my 30-day plan ↗</button>
+            </div>
+        </section>
+
+        <!-- STREAKS -->
+        <section id="screen-streaks" class="screen" role="tabpanel" aria-label="Streaks and eco actions">
+            <div class="card">
+                <div style="text-align:center;padding:8px 0">
+                    <div style="font-size:40px" aria-hidden="true">🔥</div>
+                    <h2
+                        style="font-family:var(--font-display);font-size:28px;font-weight:700;color:var(--eco-text);margin-top:4px">
+                        <span id="streak-days-count">7</span> Day Streak</h2>
+                    <p style="font-size:13px;color:var(--eco-muted);margin-top:4px">Keep going — 30 day badge at 23 more
+                        days!</p>
+                </div>
+                <div class="streak-dots" style="justify-content:center" role="list" aria-label="This week's streak">
+                    <div class="s-dot s-done" role="listitem" aria-label="Monday: done">M</div>
+                    <div class="s-dot s-done" role="listitem" aria-label="Tuesday: done">T</div>
+                    <div class="s-dot s-done" role="listitem" aria-label="Wednesday: done">W</div>
+                    <div class="s-dot s-done" role="listitem" aria-label="Thursday: done">T</div>
+                    <div class="s-dot s-done" role="listitem" aria-label="Friday: done">F</div>
+                    <div class="s-dot s-done" role="listitem" aria-label="Saturday: done">S</div>
+                    <div class="s-dot s-active" role="listitem" aria-label="Sunday: active today">S</div>
+                </div>
+            </div>
+            <div class="card">
+                <h2 class="sec-label">Today's eco actions</h2>
+                <button class="streak-action-btn" onclick="toggleStreakAction(this, 1.5, 'bottle')" aria-pressed="true">
+                    <div class="act-icon" style="background:#E1F5EE"><i class="ti ti-bottle"
+                            style="color:#1D9E75;font-size:18px" aria-hidden="true"></i></div>
+                    <div class="act-info">
+                        <div class="act-name">Carried reusable bottle</div>
+                    </div>
+                    <i class="ti ti-circle-check streak-check-icon" style="font-size:22px;color:var(--eco-green)"
+                        data-checked="true" aria-hidden="true"></i>
+                </button>
+                <button class="streak-action-btn" onclick="toggleStreakAction(this, 3.5, 'walk')" aria-pressed="true">
+                    <div class="act-icon" style="background:#EAF3DE"><i class="ti ti-walk"
+                            style="color:#3B6D11;font-size:18px" aria-hidden="true"></i></div>
+                    <div class="act-info">
+                        <div class="act-name">Walked instead of drove</div>
+                    </div>
+                    <i class="ti ti-circle-check streak-check-icon" style="font-size:22px;color:var(--eco-green)"
+                        data-checked="true" aria-hidden="true"></i>
+                </button>
+                <button class="streak-action-btn" onclick="toggleStreakAction(this, 0.8, 'recycle')"
+                    aria-pressed="true">
+                    <div class="act-icon" style="background:#E6F1FB"><i class="ti ti-recycle"
+                            style="color:#185FA5;font-size:18px" aria-hidden="true"></i></div>
+                    <div class="act-info">
+                        <div class="act-name">Recycled waste</div>
+                    </div>
+                    <i class="ti ti-circle-check streak-check-icon" style="font-size:22px;color:var(--eco-green)"
+                        data-checked="true" aria-hidden="true"></i>
+                </button>
+                <button class="streak-action-btn" onclick="toggleStreakAction(this, 4.5, 'wardrobe')"
+                    aria-pressed="false">
+                    <div class="act-icon" style="background:var(--eco-bg)"><i class="ti ti-shirt"
+                            style="color:var(--eco-muted);font-size:18px" aria-hidden="true"></i></div>
+                    <div class="act-info">
+                        <div class="act-name" style="color:var(--eco-text)">Wore existing clothes</div>
+                    </div>
+                    <i class="ti ti-circle streak-check-icon" style="font-size:22px;color:var(--eco-muted)"
+                        data-checked="false" aria-hidden="true"></i>
+                </button>
+            </div>
+            <div class="card">
+                <h2 class="sec-label">Your badges</h2>
+                <div style="display:flex;gap:20px;flex-wrap:wrap; justify-content: flex-start; padding: 4px 0;"
+                    role="list" aria-label="Earned badges">
+                    <div style="text-align:center" role="listitem">
+                        <div style="font-size:30px" aria-hidden="true">🌱</div>
+                        <div style="font-size:12px;font-weight:600;color:var(--eco-text);margin-top:4px">Eco Beginner
+                        </div>
+                    </div>
+                    <div style="text-align:center" role="listitem">
+                        <div style="font-size:30px" aria-hidden="true">⚔️</div>
+                        <div style="font-size:12px;font-weight:600;color:var(--eco-green);margin-top:4px">Green Warrior
+                        </div>
+                    </div>
+                    <div id="badge-protector" style="text-align:center; opacity:0.3; transition: opacity 0.5s;"
+                        role="listitem" aria-label="Planet Protector badge, locked">
+                        <div style="font-size:30px" aria-hidden="true">🌍</div>
+                        <div style="font-size:12px;font-weight: 600; color:var(--eco-text);margin-top:4px">Planet
+                            Protector</div>
+                        <div style="font-size:10px;color:var(--eco-muted)">Locked</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- LEADERBOARD -->
+        <section id="screen-leaderboard" class="screen" role="tabpanel" aria-label="Leaderboard">
+            <div style="display:flex;gap:8px;margin-bottom:4px" role="group" aria-label="Leaderboard scope">
+                <button class="toggle-btn sel" id="lb-friends" onclick="switchLB('friends')"
+                    aria-pressed="true">Friends</button>
+                <button class="toggle-btn" id="lb-college" onclick="switchLB('college')"
+                    aria-pressed="false">College</button>
+                <button class="toggle-btn" id="lb-city" onclick="switchLB('city')"
+                    aria-pressed="false">Bengaluru</button>
+            </div>
+            <div class="card" id="lb-list" style="display: flex; flex-direction: column; gap: 4px;" role="list"
+                aria-label="Leaderboard rankings"></div>
+            <div class="card card-teal" style="text-align:center" aria-live="polite">
+                <div style="font-size:13px;color:var(--eco-text)" id="leaderboard-tip">You're <strong>11 points</strong>
+                    behind Priya — reduce transport emissions to move up!</div>
+            </div>
+        </section>
+
+        <!-- PROFILE/REGISTER -->
+        <section id="screen-register" class="screen" role="tabpanel" aria-label="Profile">
+            <div class="card">
+                <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
+                    <div style="width:52px;height:52px;border-radius:50%;background:var(--eco-green-bg);display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:18px;font-weight:700;color:var(--eco-green)"
+                        aria-hidden="true">AD</div>
+                    <div>
+                        <h2 style="font-size:16px;font-weight:700;color:var(--eco-text)">Ananya Desai</h2>
+                        <p style="font-size:13px;color:var(--eco-muted)">Bengaluru · Member since Jan 2026</p>
+                    </div>
+                </div>
+                <dl
+                    style="border-top:0.5px solid var(--eco-border);padding-top:12px;display:flex;flex-direction:column;gap:10px">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <dt style="font-size:13px;color:var(--eco-muted)">Age</dt>
+                        <dd style="font-size:13px;font-weight:600;color:var(--eco-text)">24</dd>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <dt style="font-size:13px;color:var(--eco-muted)">City</dt>
+                        <dd style="font-size:13px;font-weight:600;color:var(--eco-text)">Bengaluru, Karnataka</dd>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                        <dt style="font-size:13px;color:var(--eco-muted)">Goals</dt>
+                        <dd style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end"><span
+                                class="badge badge-green" style="font-size:11px">Reduce transport</span><span
+                                class="badge badge-teal" style="font-size:11px">Eat plant-based</span></dd>
+                    </div>
+                </dl>
+            </div>
+            <div class="card">
+                <h2 class="sec-label">Sustainability goals</h2>
+                <div style="display:flex;flex-direction:column;gap:14px">
+                    <div>
+                        <div
+                            style="display:flex;justify-content:space-between;font-size:13px;color:var(--eco-text);margin-bottom:6px">
+                            <span>Reduce carbon by 20%</span><span style="color:var(--eco-green);font-weight:600"
+                                id="goal-prog-1-text" aria-live="polite">62%</span></div>
+                        <div class="prog-bar" role="progressbar" aria-label="Carbon reduction progress"
+                            aria-valuenow="62" aria-valuemin="0" aria-valuemax="100">
+                            <div class="prog-fill" id="goal-prog-1-fill" style="width:62%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div
+                            style="display:flex;justify-content:space-between;font-size:13px;color:var(--eco-text);margin-bottom:6px">
+                            <span>30 day streak</span><span style="color:var(--eco-amber);font-weight:600">23%</span>
+                        </div>
+                        <div class="prog-bar" role="progressbar" aria-label="30-day streak progress" aria-valuenow="23"
+                            aria-valuemin="0" aria-valuemax="100">
+                            <div class="prog-fill" style="width:23%;background:var(--eco-amber)"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div
+                            style="display:flex;justify-content:space-between;font-size:13px;color:var(--eco-text);margin-bottom:6px">
+                            <span>Thrift 5 clothing items</span><span
+                                style="color:var(--eco-sky);font-weight:600">40%</span></div>
+                        <div class="prog-bar" role="progressbar" aria-label="Thrift goal progress" aria-valuenow="40"
+                            aria-valuemin="0" aria-valuemax="100">
+                            <div class="prog-fill" style="width:40%;background:var(--eco-sky)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px">
+                <button class="cta-btn cta-outline" style="flex:1;justify-content:center"
+                    onclick="showToast('Profile editing is not available in mock mode', 'info')">Edit profile</button>
+                <button class="cta-btn cta-primary" style="flex:1;justify-content:center"
+                    onclick="sendPrompt('Suggest personalized sustainability goals for me based on my EcoTrack profile')">Personalize
+                    goals ↗</button>
+            </div>
+        </section>
+
+    </div><!-- /.app-shell -->
+
+    <script>
+        // ---------- State ----------
+        let state = {
+            transport: 'Car',
+            distance: 20,
+            electricity: 85,
+            acUsage: 6,
+            food: 'Vegetarian',
+            clothing: 'Existing clothes',
+            receipts: [
+                { name: 'Fast fashion t-shirt', category: 'Clothing · Myntra', co2: 7.2, icon: 'ti-shirt', bg: '#FAECE7', color: '#854F0B' },
+                { name: 'Groceries (fruits, veg)', category: 'Food · BigBasket', co2: 1.1, icon: 'ti-apple', bg: '#EAF3DE', color: '#3B6D11' },
+                { name: 'Phone charging cable', category: 'Electronics · Amazon', co2: 4.1, icon: 'ti-device-mobile', bg: '#FAECE7', color: '#993C1D' }
+            ],
+            wardrobe: [
+                { emoji: '👕', name: 'White tee', worn: 14 },
+                { emoji: '👖', name: 'Blue jeans', worn: 9 },
+                { emoji: '👗', name: 'Floral dress', worn: 3 },
+                { emoji: '🧥', name: 'Denim jacket', worn: 6 },
+                { emoji: '👟', name: 'White sneakers', worn: 21 }
+            ],
+            wardrobeRepeats: 6,
+            wardrobeMaxRepeats: 10,
+            challengesCompleted: 12,
+            streakDays: 7,
+            ecoScore: 78
+        };
+
+        // NOTE: Emission factors below are illustrative estimates for demo purposes only.
+        // They are not calibrated real-world data and should not be presented as factual.
+        const transportFactors = { 'Car': 0.18, 'Bike': 0.0, 'Bus': 0.08, 'Metro': 0.05, 'Walking': 0.0 };
+        const foodFactors = { 'Vegan': 1.5, 'Vegetarian': 2.5, 'Non-veg': 5.5 };
+        const clothingFactors = { 'Existing clothes': 0.0, 'Thrifted': 0.5, 'New purchase': 8.0, 'Sustainable brand': 3.0 };
+
+        let streakActionsChecked = { bottle: true, walk: true, recycle: true, wardrobe: false };
+
+        // Cached DOM references for hot-path reads
+        const elMonthlyCO2 = () => document.getElementById('monthly-co2-val');
+        const elForecastCurr = () => document.getElementById('forecast-current-val');
+        const elForecastNext = () => document.getElementById('forecast-val');
+        const elTreesSaved = () => document.getElementById('trees-saved-val');
+        const elScoreNum = () => document.getElementById('score-num-text');
+        const elScoreRing = () => document.getElementById('score-ring-fill');
+        const elScoreFeedback = () => document.getElementById('score-feedback');
+        const elEstimatedToday = () => document.getElementById('estimated-today-val');
+        const elGoalFill = () => document.getElementById('goal-prog-1-fill');
+        const elGoalText = () => document.getElementById('goal-prog-1-text');
+
+        // Sanitise user-typed text before innerHTML insertion (XSS prevention)
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>"']/g, ch => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[ch]));
+        }
+
+        const leaderboardData = {
+            friends: [
+                { rank: 1, avatar: 'RK', name: 'Rahul K.', streak: '21d streak', score: 94, isSelf: false, badgeClass: 'badge-green' },
+                { rank: 2, avatar: 'PS', name: 'Priya S.', streak: '15d', score: 89, isSelf: false, badgeClass: 'badge-teal' },
+                { rank: 3, avatar: 'YO', name: 'You', streak: '7d', score: 78, isSelf: true, badgeClass: 'badge-sky' },
+                { rank: 4, avatar: 'AM', name: 'Arjun M.', streak: '3d streak', score: 71, isSelf: false, badgeClass: '' },
+                { rank: 5, avatar: 'SN', name: 'Sara N.', streak: '1d streak', score: 65, isSelf: false, badgeClass: '' }
+            ],
+            college: [
+                { rank: 1, avatar: 'SP', name: 'Sameer P.', streak: '32d streak', score: 96, isSelf: false, badgeClass: 'badge-green' },
+                { rank: 2, avatar: 'RJ', name: 'Riya J.', streak: '18d', score: 91, isSelf: false, badgeClass: 'badge-teal' },
+                { rank: 3, avatar: 'TS', name: 'Tanmay S.', streak: '12d', score: 85, isSelf: false, badgeClass: 'badge-teal' },
+                { rank: 4, avatar: 'YO', name: 'You', streak: '7d', score: 78, isSelf: true, badgeClass: 'badge-sky' },
+                { rank: 5, avatar: 'DK', name: 'Divya K.', streak: '2d streak', score: 74, isSelf: false, badgeClass: '' }
+            ],
+            city: [
+                { rank: 1, avatar: 'NG', name: 'Nitin G.', streak: '45d streak', score: 98, isSelf: false, badgeClass: 'badge-green' },
+                { rank: 2, avatar: 'AR', name: 'Aditi R.', streak: '24d', score: 92, isSelf: false, badgeClass: 'badge-teal' },
+                { rank: 3, avatar: 'VV', name: 'Sneha V.', streak: '19d', score: 88, isSelf: false, badgeClass: 'badge-teal' },
+                { rank: 4, avatar: 'KD', name: 'Kiran D.', streak: '10d', score: 81, isSelf: false, badgeClass: 'badge-sky' },
+                { rank: 5, avatar: 'YO', name: 'You', streak: '7d', score: 78, isSelf: true, badgeClass: 'badge-sky' },
+                { rank: 6, avatar: 'RS', name: 'Ramesh S.', streak: '4d streak', score: 72, isSelf: false, badgeClass: '' }
+            ]
+        };
+
+        // ---------- Nav ----------
+        function showScreen(id, tabEl) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => {
+                t.classList.remove('active');
+                t.setAttribute('aria-selected', 'false');
+            });
+            const screenEl = document.getElementById('screen-' + id);
+            if (screenEl) screenEl.classList.add('active');
+            if (tabEl) {
+                tabEl.classList.add('active');
+                tabEl.setAttribute('aria-selected', 'true');
+            }
+        }
+
+        // ---------- Theme ----------
+        function initTheme() {
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeIcon = themeToggle.querySelector('i');
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            if (prefersDark) {
+                document.body.classList.add('dark');
+                themeIcon.className = 'ti ti-sun';
+            }
+            themeToggle.addEventListener('click', () => {
+                document.body.classList.toggle('dark');
+                themeIcon.className = document.body.classList.contains('dark') ? 'ti ti-sun' : 'ti ti-moon';
+            });
+        }
+
+        // ---------- Carbon calculator ----------
+        function updateForecastBar(id, pct, labelText) {
+            const rowEl = document.getElementById(id);
+            if (!rowEl) return;
+            const fillEl = rowEl.querySelector('.fbar-fill');
+            const valEl = rowEl.querySelector('.fbar-val');
+            if (fillEl) fillEl.style.width = pct + '%';
+            if (valEl) valEl.textContent = labelText;
+        }
+
+        // Track which leaderboard tab is active so updateCarbonCalculator only re-renders if visible
+        let activeLBMode = 'friends';
+
+        function updateCarbonCalculator() {
+            const tFactor = transportFactors[state.transport] || 0;
+            const transDaily = state.distance * tFactor;
+            const acDaily = state.acUsage * 1.2;
+            const foodDaily = foodFactors[state.food] || 2.5;
+            const clothDaily = (clothingFactors[state.clothing] || 0) / 7;
+            const elecDaily = (state.electricity * 0.85) / 30;
+            const todayTotal = transDaily + acDaily + foodDaily + clothDaily + elecDaily;
+
+            const estimated = elEstimatedToday();
+            if (estimated) estimated.textContent = todayTotal.toFixed(1) + ' kg CO₂';
+
+            const monthlyFootprint = Math.round(todayTotal * 30);
+            const treesSaved = Math.max(0.1, Math.round((280 - monthlyFootprint) * 10 / 52) / 10);
+
+            let ecoScore = 100 - Math.round(monthlyFootprint / 4.8);
+            state.ecoScore = Math.max(10, Math.min(100, ecoScore));
+
+            const co2El = elMonthlyCO2(); if (co2El) co2El.textContent = monthlyFootprint;
+            const fcEl = elForecastCurr(); if (fcEl) fcEl.textContent = monthlyFootprint;
+            const tEl = elTreesSaved(); if (tEl) tEl.textContent = treesSaved.toFixed(1);
+            const snEl = elScoreNum(); if (snEl) snEl.textContent = state.ecoScore;
+
+            const ringFill = elScoreRing();
+            if (ringFill) {
+                const offset = Math.round(201 - (201 * state.ecoScore / 100));
+                ringFill.style.strokeDashoffset = offset;
+            }
+
+            const scoreFeedback = elScoreFeedback();
+            if (scoreFeedback) {
+                if (state.ecoScore >= 85) {
+                    scoreFeedback.textContent = 'Excellent! Highly sustainable lifestyle';
+                    scoreFeedback.style.color = 'var(--eco-green)';
+                } else if (state.ecoScore >= 70) {
+                    scoreFeedback.textContent = 'Good progress this month';
+                    scoreFeedback.style.color = 'var(--eco-muted)';
+                } else {
+                    scoreFeedback.textContent = 'High carbon impact. Reduce transport emissions.';
+                    scoreFeedback.style.color = 'var(--eco-coral)';
+                }
+            }
+
+            const fvEl = elForecastNext(); if (fvEl) fvEl.textContent = Math.round(monthlyFootprint * 1.08);
+
+            const transPct = todayTotal ? Math.round((transDaily / todayTotal) * 100) : 0;
+            const energyPct = todayTotal ? Math.round(((acDaily + elecDaily) / todayTotal) * 100) : 0;
+            const foodPct = todayTotal ? Math.round((foodDaily / todayTotal) * 100) : 0;
+            const clothPct = todayTotal ? Math.round((clothDaily / todayTotal) * 100) : 0;
+
+            updateForecastBar('forecast-bar-trans', transPct, transPct + '% · ' + Math.round(transDaily * 30) + ' kg');
+            updateForecastBar('forecast-bar-energy', energyPct, energyPct + '% · ' + Math.round((acDaily + elecDaily) * 30) + ' kg');
+            updateForecastBar('forecast-bar-food', foodPct, foodPct + '% · ' + Math.round(foodDaily * 30) + ' kg');
+            updateForecastBar('forecast-bar-cloth', clothPct, clothPct + '% · ' + Math.round(clothDaily * 30) + ' kg');
+
+            const reductionProgress = Math.max(10, Math.min(100, Math.round((220 - monthlyFootprint) / 2.2 * 10) / 10));
+            const gFill = elGoalFill(); const gText = elGoalText();
+            if (gFill && gText) {
+                gFill.style.width = reductionProgress + '%';
+                gText.textContent = Math.round(reductionProgress) + '%';
+                const pbEl = gFill.closest('[role="progressbar"]');
+                if (pbEl) pbEl.setAttribute('aria-valuenow', Math.round(reductionProgress));
+            }
+
+            // Only re-render leaderboard when the leaderboard screen is active (avoid needless DOM churn)
+            const lbScreen = document.getElementById('screen-leaderboard');
+            if (lbScreen && lbScreen.classList.contains('active')) {
+                renderLeaderboard(activeLBMode);
+            }
+        }
+
+        function setToggleGroup(groupEl, activeBtn) {
+            groupEl.querySelectorAll('.toggle-btn').forEach(b => b.setAttribute('aria-pressed', 'false'));
+            activeBtn.setAttribute('aria-pressed', 'true');
+        }
+
+        function selectTransport(btn, modeName) {
+            state.transport = modeName;
+            setToggleGroup(document.getElementById('transport-sel'), btn);
+            updateCarbonCalculator();
+        }
+        function selectFood(btn, foodName) {
+            state.food = foodName;
+            setToggleGroup(document.getElementById('food-sel'), btn);
+            updateCarbonCalculator();
+        }
+        function selectClothing(btn, clothingName) {
+            state.clothing = clothingName;
+            setToggleGroup(document.getElementById('cloth-sel'), btn);
+            updateCarbonCalculator();
+        }
+        function handleDistanceSlider(val) {
+            state.distance = parseFloat(val);
+            const distOut = document.getElementById('dist-out');
+            const distSl = document.getElementById('dist-sl');
+            if (distOut) distOut.textContent = val + ' km';
+            if (distSl) distSl.setAttribute('aria-valuetext', val + ' kilometres');
+            updateCarbonCalculator();
+        }
+        function adj(id, delta) {
+            if (id === 'elec') {
+                state.electricity = Math.max(0, state.electricity + delta * 5);
+                const el = document.getElementById('elec'); if (el) el.textContent = state.electricity;
+            } else if (id === 'ac') {
+                state.acUsage = Math.max(0, Math.min(24, state.acUsage + delta));
+                const el = document.getElementById('ac'); if (el) el.textContent = state.acUsage;
+            }
+            updateCarbonCalculator();
+        }
+
+        // ---------- Toasts ----------
+        function showToast(message, type) {
+            type = type || 'info';
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.setAttribute('role', 'status');
+            toast.style.cssText = 'background:var(--eco-surface);color:var(--eco-text);border:0.5px solid var(--eco-border);box-shadow:var(--shadow-lg);border-radius:var(--border-radius-md);padding:10px 16px;font-size:13px;display:flex;align-items:center;gap:8px;min-width:220px;animation:slideIn 0.3s ease forwards;';
+
+            let iconClass = 'ti ti-info-circle', iconColor = 'var(--eco-sky)';
+            if (type === 'success') { iconClass = 'ti ti-circle-check'; iconColor = 'var(--eco-green)'; }
+            else if (type === 'error') { iconClass = 'ti ti-circle-x'; iconColor = 'var(--eco-coral)'; }
+
+            toast.innerHTML = '<i class="' + iconClass + '" style="color:' + iconColor + '; font-size: 16px;" aria-hidden="true"></i><div style="flex:1;">' + escapeHTML(message) + '</div>';
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // ---------- Receipts ----------
+        function renderReceiptsList() {
+            const listEl = document.getElementById('receipt-list');
+            const summaryEl = document.getElementById('receipt-summary');
+            if (!listEl || !summaryEl) return;
+
+            const totalCO2 = state.receipts.reduce((sum, item) => sum + item.co2, 0).toFixed(1);
+
+            listEl.innerHTML = state.receipts.map(item => (
+                '<div class="act-row">' +
+                '<div class="act-icon" style="background:' + item.bg + ';color:' + item.color + '" aria-hidden="true"><i class="ti ' + item.icon + '" style="font-size:18px"></i></div>' +
+                '<div class="act-info"><div class="act-name">' + escapeHTML(item.name) + '</div><div class="act-sub">' + escapeHTML(item.category) + '</div></div>' +
+                '<div class="act-co2" style="color:' + (item.co2 > 5.0 ? 'var(--eco-coral)' : 'var(--eco-green)') + '">' + item.co2 + ' kg</div>' +
+                '</div>'
+            )).join('');
+
+            const highlightText = parseFloat(totalCO2) > 10
+                ? '<span class="badge badge-coral"><i class="ti ti-alert-triangle" style="font-size:12px" aria-hidden="true"></i>High impact items detected</span>'
+                : '<span class="badge badge-green"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Excellent low carbon selection</span>';
+
+            summaryEl.innerHTML =
+                '<div><div style="font-size:12px;color:var(--eco-muted)">Total impact</div>' +
+                '<div style="font-family:var(--font-display);font-size:20px;font-weight:700;color:var(--eco-text)"><span id="receipt-total-co2">' + totalCO2 + '</span> kg CO₂</div></div>' +
+                highlightText;
+        }
+
+        let isScanning = false;
+        function simulateReceiptScan() {
+            if (isScanning) return;
+            const uploadZone = document.querySelector('.upload-zone');
+            if (!uploadZone) return;
+            isScanning = true;
+
+            const originalContent = uploadZone.innerHTML;
+            uploadZone.style.borderStyle = 'solid';
+            uploadZone.style.borderColor = 'var(--eco-green)';
+            uploadZone.innerHTML =
+                '<div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 12px 0;">' +
+                '<i class="ti ti-loader-quarter" style="font-size: 38px; color: var(--eco-green); animation: spin 1s linear infinite;" aria-hidden="true"></i>' +
+                '<div style="font-size: 14px; font-weight: 700; color: var(--eco-green)" role="status">Scanning &amp; Analyzing Receipt…</div>' +
+                '<div style="font-size: 11px; color: var(--eco-muted)">Extracting items via OCR &amp; calculating CO₂ offsets…</div>' +
+                '<div style="width: 100%; max-width: 200px; height: 6px; background: var(--eco-bg); border-radius: 3px; overflow: hidden; margin-top: 4px;" role="progressbar" aria-label="Scan progress">' +
+                '<div id="scan-progress" style="height: 100%; width: 0%; background: var(--eco-green); border-radius: 3px; transition: width 1.5s ease;"></div></div></div>';
+
+            setTimeout(() => {
+                const prog = document.getElementById('scan-progress');
+                if (prog) prog.style.width = '100%';
+            }, 50);
+
+            setTimeout(() => {
+                const newItems = [
+                    { name: 'Organic Cotton Sweatshirt', category: 'Clothing · Patagonia', co2: 2.8, icon: 'ti-shirt', bg: '#EAF3DE', color: '#3B6D11' },
+                    { name: 'Plant-based Meat Patties', category: 'Food · Whole Foods', co2: 1.4, icon: 'ti-apple', bg: '#EAF3DE', color: '#3B6D11' },
+                    { name: 'Sustainably Sourced Cutlery', category: 'Household · Ikea', co2: 0.3, icon: 'ti-tools', bg: '#E1F5EE', color: '#0F6E56' }
+                ];
+                state.receipts = [...newItems, ...state.receipts].slice(0, 5);
+
+                uploadZone.style.borderStyle = 'dashed';
+                uploadZone.style.borderColor = '#5DCAA5';
+                uploadZone.innerHTML = originalContent;
+                isScanning = false;
+
+                renderReceiptsList();
+                showToast('Receipt scanned successfully! +3 challenge points.', 'success');
+
+                state.challengesCompleted += 1;
+                const cdEl = document.getElementById('challenges-done-val');
+                if (cdEl) cdEl.textContent = state.challengesCompleted;
+                updateCarbonCalculator();
+            }, 1800);
+        }
+
+        // ---------- Leaderboard ----------
+        function switchLB(mode) {
+            activeLBMode = mode;
+            ['friends', 'college', 'city'].forEach(m => {
+                const btn = document.getElementById('lb-' + m);
+                if (btn) {
+                    btn.classList.toggle('sel', m === mode);
+                    btn.setAttribute('aria-pressed', m === mode ? 'true' : 'false');
+                }
+            });
+            renderLeaderboard(mode);
+        }
+
+        function renderLeaderboard(mode) {
+            const listEl = document.getElementById('lb-list');
+            if (!listEl) return;
+            const users = leaderboardData[mode] || [];
+
+            const updatedUsers = users.map(user => user.isSelf ? { ...user, score: state.ecoScore, streak: state.streakDays + 'd' } : user);
+            updatedUsers.sort((a, b) => b.score - a.score);
+            updatedUsers.forEach((user, idx) => { user.rank = idx + 1; });
+
+            listEl.innerHTML = '';
+            updatedUsers.forEach(user => {
+                const row = document.createElement('div');
+                row.className = 'lb-row';
+                row.setAttribute('role', 'listitem');
+                if (user.isSelf) {
+                    row.style.cssText = 'background:var(--eco-green-bg);border-radius:var(--border-radius-md);padding:9px 12px;border:0.5px solid rgba(16,185,129,0.2);';
+                    row.setAttribute('aria-label', 'Your rank: ' + user.rank);
+                }
+                const rankClass = user.rank <= 2 ? 'lb-rank top' : 'lb-rank';
+                let avatarBg = 'var(--eco-bg)', avatarColor = 'var(--eco-muted)';
+                if (user.rank === 1) { avatarBg = '#ecfdf5'; avatarColor = '#059669'; }
+                else if (user.rank === 2) { avatarBg = '#f0fdf4'; avatarColor = '#15803d'; }
+                else if (user.isSelf) { avatarBg = 'var(--eco-green-bg)'; avatarColor = 'var(--eco-green)'; }
+
+                const badgeSpan = user.streak
+                    ? '<span class="badge ' + (user.badgeClass || 'badge-green') + '" style="font-size: 11px; margin-left: auto; margin-right: 10px;" aria-label="' + user.streak + ' streak"><span aria-hidden="true">🔥</span> ' + escapeHTML(user.streak) + '</span>'
+                    : '';
+
+                row.innerHTML =
+                    '<div class="' + rankClass + '" aria-hidden="true">' + user.rank + '</div>' +
+                    '<div class="lb-avatar" style="background:' + avatarBg + ';color:' + avatarColor + '" aria-hidden="true">' + escapeHTML(user.avatar) + '</div>' +
+                    '<div class="lb-name" style="' + (user.isSelf ? 'font-weight:700' : 'font-weight:500') + '">' + escapeHTML(user.name) + '</div>' +
+                    badgeSpan +
+                    '<div class="lb-score" aria-label="score: ' + user.score + '">' + user.score + '</div>';
+                listEl.appendChild(row);
+            });
+
+            const tipEl = document.getElementById('leaderboard-tip');
+            if (tipEl) {
+                const selfUser = updatedUsers.find(u => u.isSelf);
+                const selfIdx = updatedUsers.indexOf(selfUser);
+                if (selfIdx > 0) {
+                    const nextUser = updatedUsers[selfIdx - 1];
+                    const diff = nextUser.score - selfUser.score;
+                    tipEl.innerHTML = "You're <strong>" + diff + ' points</strong> behind ' + escapeHTML(nextUser.name.split(' ')[0]) + ' — reduce transport emissions to move up!';
+                } else {
+                    tipEl.innerHTML = '🏆 Amazing work! You are currently leading the scoreboard!';
+                }
+            }
+        }
+
+        // ---------- Wardrobe ----------
+        function toggleAddWardrobeForm(show) {
+            const form = document.getElementById('add-item-form');
+            if (form) {
+                form.style.display = show ? 'flex' : 'none';
+                if (show) {
+                    const nameInput = document.getElementById('new-item-name');
+                    if (nameInput) nameInput.focus();
+                }
+            }
+        }
+
+        function saveNewWardrobeItem() {
+            const nameEl = document.getElementById('new-item-name');
+            const emojiEl = document.getElementById('new-item-emoji');
+            const name = nameEl.value.trim();
+            const emoji = emojiEl.value;
+
+            if (!name) { showToast('Please enter an item name', 'error'); return; }
+
+            state.wardrobe.push({ emoji, name, worn: 0 });
+            nameEl.value = '';
+
+            renderWardrobeGrid();
+            toggleAddWardrobeForm(false);
+            showToast('Added ' + emoji + ' ' + name + ' to wardrobe!', 'success');
+        }
+
+        function renderWardrobeGrid() {
+            const grid = document.getElementById('wardrobe-grid-items');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            state.wardrobe.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'wardrobe-item';
+                btn.setAttribute('role', 'listitem');
+                btn.setAttribute('aria-label', item.name + ', worn ' + item.worn + ' times. Click to log a wear.');
+                btn.onclick = () => wearWardrobeItem(index);
+                btn.innerHTML =
+                    '<div class="wardrobe-emoji" aria-hidden="true">' + escapeHTML(item.emoji) + '</div>' +
+                    '<div class="wardrobe-name">' + escapeHTML(item.name) + '</div>' +
+                    '<div class="wardrobe-worn">Worn ' + item.worn + '×</div>';
+                grid.appendChild(btn);
+            });
+
+            const addBtn = document.createElement('button');
+            addBtn.className = 'wardrobe-item';
+            addBtn.style.cssText = 'background:var(--eco-green-bg);border-color:#9FE1CB;';
+            addBtn.setAttribute('aria-label', 'Add new clothing item');
+            addBtn.onclick = () => toggleAddWardrobeForm(true);
+            addBtn.innerHTML = '<div style="font-size: 28px; color: var(--eco-green); margin-bottom: 6px;" aria-hidden="true">+</div><div class="wardrobe-name" style="color: var(--eco-green); font-weight: 700;">Add item</div>';
+            grid.appendChild(addBtn);
+        }
+
+        function wearWardrobeItem(index) {
+            const item = state.wardrobe[index];
+            if (!item) return;
+            item.worn += 1;
+            state.wardrobeRepeats += 1;
+            renderWardrobeGrid();
+            updateWardrobeProgress();
+            showToast('Logged wear for ' + item.emoji + ' ' + item.name + '! Repeat count updated.', 'success');
+        }
+
+        function updateWardrobeProgress() {
+            const pct = Math.min(100, Math.round((state.wardrobeRepeats / state.wardrobeMaxRepeats) * 100));
+            const countEl = document.getElementById('wardrobe-repeat-count');
+            if (countEl) countEl.textContent = state.wardrobeRepeats + '/' + state.wardrobeMaxRepeats;
+            const fill = document.getElementById('wardrobe-repeat-fill');
+            if (fill) fill.style.width = pct + '%';
+
+            if (state.wardrobeRepeats >= state.wardrobeMaxRepeats) {
+                const badge = document.getElementById('badge-protector');
+                if (badge) {
+                    badge.style.opacity = '1';
+                    badge.setAttribute('aria-label', 'Planet Protector badge, unlocked!');
+                    const lockedLabel = badge.querySelector('div:last-child');
+                    if (lockedLabel) { lockedLabel.textContent = 'Unlocked'; lockedLabel.style.color = 'var(--eco-green)'; }
+                }
+                showToast('🎉 Badge Unlocked: Planet Protector!', 'success');
+            }
+        }
+
+        // ---------- Chatbot ----------
+        function getBotReply(promptText) {
+            const lower = promptText.toLowerCase();
+            const monthlyVal = (elMonthlyCO2() || {}).textContent || '145';
+
+            if (lower.includes('reduce') || lower.includes('footprint') || lower.includes('plan')) {
+                return 'Based on your live settings (daily travel: ' + state.distance + ' km by ' + state.transport + ', electricity: ' + state.electricity + ' kWh, AC: ' + state.acUsage + ' hrs/day), your projected monthly footprint is <strong>' + monthlyVal + ' kg CO₂</strong>.<br><br>' +
+                    '1. <strong>Transportation</strong>: switching your commute to public transit 2 days/week saves ~22.4 kg CO₂/month.<br>' +
+                    '2. <strong>AC efficiency</strong>: setting AC to 24°C instead of 22°C saves ~6 kg CO₂/month.<br>' +
+                    '3. <strong>Diet</strong>: you are currently logging ' + state.food + ' meals, which already saves around 30 kg CO₂/month versus a meat-heavy diet.';
+            }
+            if (lower.includes('food') || lower.includes('diet') || lower.includes('vegan') || lower.includes('veg')) {
+                return 'Your diet is currently set to <strong>' + escapeHTML(state.food) + '</strong>.<br><br>Switching fully to vegan meals brings daily food emissions down to ~1.5 kg CO₂ — about 1.0 kg less than Vegetarian, or 4.0 kg less than Non-veg. Adding two vegan days a week saves roughly 8.6 kg CO₂/month.';
+            }
+            if (lower.includes('score') || lower.includes('calculate') || (lower.includes('how') && lower.includes('eco'))) {
+                return 'Your EcoScore is <strong>' + state.ecoScore + '/100</strong>. It factors in:<br><br>• Carbon emissions (target under 100 kg CO₂/month)<br>• Daily habits logged on the Streaks screen<br>• Receipt scan activity, rewarded for local or organic purchases<br>• Your current streak, which adds a small multiplier';
+            }
+            if (lower.includes('thrift') || lower.includes('wardrobe') || lower.includes('clothing') || lower.includes('fashion')) {
+                const avgWorn = Math.round(state.wardrobe.reduce((sum, item) => sum + item.worn, 0) / state.wardrobe.length);
+                return 'A new piece of clothing costs around 8.0 kg CO₂; the same item thrifted is closer to 0.5 kg CO₂.<br><br>Your wardrobe has <strong>' + state.wardrobe.length + ' items</strong>, worn an average of <strong>' + avgWorn + ' times</strong> each. Keep repeating outfits to unlock the Planet Protector badge!';
+            }
+            if (lower.includes('goal') || lower.includes('profile')) {
+                const goalPct = (elGoalText() || {}).textContent || '62%';
+                return 'Your primary goal is to reduce carbon by 20% — you are currently at <strong>' + goalPct + '</strong>. Lowering your daily transport distance and logging a few more outfit repeats this week would speed that up.';
+            }
+            return "Here's a quick eco-tip: carrying a reusable steel bottle instead of buying plastic ones avoids about 1.8 kg CO₂ per bottle. Keep checking in on your streaks to stay on track!";
+        }
+
+        function sendPrompt(promptText) {
+            if (!promptText) return;
+            showScreen('chatbot');
+            // Update nav tab active state when navigating programmatically
+            document.querySelectorAll('.nav-tab').forEach(t => {
+                const ctrl = t.getAttribute('aria-controls') || '';
+                t.setAttribute('aria-selected', ctrl === 'screen-chatbot' ? 'true' : 'false');
+                t.classList.toggle('active', ctrl === 'screen-chatbot');
+            });
+
+            const chatMessages = document.getElementById('chat-messages');
+            if (!chatMessages) return;
+
+            const userDiv = document.createElement('div');
+            userDiv.style.textAlign = 'right';
+            userDiv.innerHTML = '<div class="chat-label" style="text-align:right">You</div><div class="chat-bubble chat-user">' + escapeHTML(promptText) + '</div>';
+            chatMessages.appendChild(userDiv);
+
+            const container = document.getElementById('chat-container');
+            if (container) container.scrollTop = container.scrollHeight;
+
+            const typingDiv = document.createElement('div');
+            typingDiv.id = 'bot-typing';
+            typingDiv.setAttribute('aria-label', 'EcoBot is typing');
+            typingDiv.innerHTML = '<div class="chat-label">EcoBot</div><div class="chat-bubble chat-bot" style="display: inline-flex; align-items: center; gap: 4px; padding: 10px 18px;" aria-hidden="true">' +
+                '<span style="width: 6px; height: 6px; border-radius: 50%; background: var(--eco-muted); animation: bounce 1.2s infinite 0.1s;"></span>' +
+                '<span style="width: 6px; height: 6px; border-radius: 50%; background: var(--eco-muted); animation: bounce 1.2s infinite 0.2s;"></span>' +
+                '<span style="width: 6px; height: 6px; border-radius: 50%; background: var(--eco-muted); animation: bounce 1.2s infinite 0.3s;"></span></div>';
+            chatMessages.appendChild(typingDiv);
+            if (container) container.scrollTop = container.scrollHeight;
+
+            const replyText = getBotReply(promptText);
+
+            setTimeout(() => {
+                const indicator = document.getElementById('bot-typing');
+                if (indicator) indicator.remove();
+                const botDiv = document.createElement('div');
+                botDiv.innerHTML = '<div class="chat-label">EcoBot</div><div class="chat-bubble chat-bot">' + replyText + '</div>';
+                chatMessages.appendChild(botDiv);
+                if (container) container.scrollTop = container.scrollHeight;
+            }, 1000);
+        }
+
+        function sendChat() {
+            const input = document.getElementById('chat-input');
+            if (!input) return;
+            const text = input.value.trim();
+            if (text) { sendPrompt(text); input.value = ''; }
+        }
+
+        // ---------- Streaks ----------
+        function toggleStreakAction(btn, co2Saved, key) {
+            const icon = btn.querySelector('.streak-check-icon');
+            if (!icon) return;
+            const isChecked = icon.getAttribute('data-checked') === 'true';
+
+            if (isChecked) {
+                icon.setAttribute('data-checked', 'false');
+                icon.className = 'ti ti-circle streak-check-icon';
+                icon.style.color = 'var(--eco-muted)';
+                btn.setAttribute('aria-pressed', 'false');
+                streakActionsChecked[key] = false;
+                showToast('Action removed. Carbon score updated.', 'info');
+            } else {
+                icon.setAttribute('data-checked', 'true');
+                icon.className = 'ti ti-circle-check streak-check-icon';
+                icon.style.color = 'var(--eco-green)';
+                btn.setAttribute('aria-pressed', 'true');
+                streakActionsChecked[key] = true;
+                showToast('Logged: +' + co2Saved + ' kg CO₂ saved today!', 'success');
+
+                if (Object.values(streakActionsChecked).every(v => v === true)) {
+                    state.streakDays += 1;
+                    const hsEl = document.getElementById('header-streak-days'); if (hsEl) hsEl.textContent = state.streakDays;
+                    const dsEl = document.getElementById('dash-streak-days'); if (dsEl) dsEl.textContent = state.streakDays;
+                    const scEl = document.getElementById('streak-days-count'); if (scEl) scEl.textContent = state.streakDays;
+                    showToast('🔥 Streak extended! Keep it up for ' + state.streakDays + ' days!', 'success');
+                }
+            }
+            updateCarbonCalculator();
+        }
+
+        // ---------- Ambient canvas background ----------
+        // Driven by state.ecoScore: calmer score → calmer waves.
+        // Disabled automatically when prefers-reduced-motion is set (via CSS display:none on #bg-canvas).
+        const bgCanvas = document.getElementById('bg-canvas');
+        const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        let bgAnimationId = null;
+
+        if (bgCanvas && !reducedMotion) {
+            const bgCtx = bgCanvas.getContext('2d');
+            let bgW, bgH, bgDpr;
+
+            function resizeBgCanvas() {
+                bgDpr = window.devicePixelRatio || 1;
+                bgW = window.innerWidth;
+                bgH = window.innerHeight;
+                bgCanvas.width = bgW * bgDpr;
+                bgCanvas.height = bgH * bgDpr;
+                bgCanvas.style.width = bgW + 'px';
+                bgCanvas.style.height = bgH + 'px';
+                bgCtx.setTransform(bgDpr, 0, 0, bgDpr, 0, 0);
+            }
+            window.addEventListener('resize', resizeBgCanvas);
+            resizeBgCanvas();
+
+            const waveLayers = [
+                { a: 0.05, f: 0.0035, p: 0.0, rgb: [91, 124, 78] },
+                { a: 0.045, f: 0.0048, p: 1.3, rgb: [147, 168, 110] },
+                { a: 0.04, f: 0.0026, p: 2.6, rgb: [92, 126, 150] },
+                { a: 0.035, f: 0.0061, p: 4.0, rgb: [190, 138, 61] },
+                { a: 0.03, f: 0.0042, p: 5.2, rgb: [184, 92, 64] }
+            ];
+
+            let bgT = 0;
+            function drawBackground() {
+                bgCtx.clearRect(0, 0, bgW, bgH);
+                const score = state.ecoScore;
+                const calm = score / 100;
+                const ampScale = 0.55 + (1 - calm) * 1.35;
+                const freqScale = 0.85 + (1 - calm) * 0.65;
+                const speed = 0.0028 + (1 - calm) * 0.0045;
+                const dark = document.body.classList.contains('dark');
+                const alphaMult = dark ? 1.5 : 1;
+
+                waveLayers.forEach(w => {
+                    const baseY = bgH * (0.16 + waveLayers.indexOf(w) * 0.17);
+                    const amp = bgH * w.a * ampScale;
+                    const alpha = w.a * 1.7 * alphaMult;
+
+                    bgCtx.beginPath();
+                    for (let x = 0; x <= bgW; x += 6) {
+                        const y = baseY + amp * Math.sin(w.f * freqScale * x + bgT + w.p);
+                        if (x === 0) bgCtx.moveTo(x, y); else bgCtx.lineTo(x, y);
+                    }
+                    bgCtx.lineTo(bgW, bgH);
+                    bgCtx.lineTo(0, bgH);
+                    bgCtx.closePath();
+                    bgCtx.fillStyle = 'rgba(' + w.rgb[0] + ',' + w.rgb[1] + ',' + w.rgb[2] + ',' + alpha.toFixed(3) + ')';
+                    bgCtx.fill();
+                });
+
+                bgT += speed;
+                bgAnimationId = requestAnimationFrame(drawBackground);
+            }
+
+            drawBackground();
+        }
+
+        // ---------- Init ----------
+        window.addEventListener('DOMContentLoaded', () => {
+            // Set initial tab to dashboard active state
+            const dashTab = document.querySelector('.nav-tab[aria-controls="screen-dashboard"]');
+            if (dashTab) dashTab.setAttribute('aria-selected', 'true');
+
+            initTheme();
+            renderWardrobeGrid();
+            renderReceiptsList();
+            renderLeaderboard('friends');
+            updateCarbonCalculator();
+        });
+    </script>
+</body>
+
+</html>

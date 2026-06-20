@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "gifted-dreamer-494311-f6",
+  "private_key_id": "8d00b1e59cdfad3b8286203424319bd245f7d571",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC3Rs5rOfdIFfwc\nc7hBwrU5Pf8YQd6I5I44PX/xhTIXtzpqNsdjXOzdww52J4UGZrSrIPivsBvJbqkz\nUuc6/6bJzmLg/5SD4WGVJhTtv3WW+bP+R/gx+6tS4GURY5C8mgVWF7JXHBt1+uVK\nVdu6UiwqSk+DM/Aqi5Gnv42aIcSHr+Zs9ZuTkLIqHpxJzLOjvY8SkfnjGZiD0/AP\nB1/YloWOUlS6gLUjHUbWQbWGCY/8Lt5qC+quQxjF/+fPIQPOagOAK4o3fOrANOxc\nR5Jj1n5o68m3MgfPHEKKbWICVjvGj/cJmyHxiDXPwDh/KLPiHsxxspvfr5sa4Ev9\nizFRryHdAgMBAAECggEAC0Wq1Ov2AkQ94wcX/k1qJXjja1vDwtIh0CIyMAnT5KMD\nj/xKA5m3xMTmKwyvsQ7YjkzjFrUjZF5uwCYZbCbEnJVZvgJiIUFXpdt3fo7fvdci\nQ6GsCXDz3s9H0Au6X2suqFahRJvJMZaqiwmgT8OVjU1QOh7T5t36KaHNpPzuMDUd\n8S3MXXOO24bvksGSFP5idTlJDAuhytwfKaWCatAaic4JdVD5bntI1IwZwIVs6sKH\n0GY7rHuT5/LmmlCjvRZm130xBm0OGIzgb9KFL1EN7KwaZptYxQ2uNN2vkJzlNwX6\n7u90eu0kjQXqBxmPJN4cOKdgYDvQtwu0MGpJx9wSEQKBgQDh5QiGH97X6bfNjcLn\nIM6RvJ/Mf4u6p0vZJcKmYkTwttNl8QDky7k2ol+fFIkzDmNd4fG3P7Uaiq0tke2q\nCV9Lit0PNhVthJfqcTTROpLDtGW6jXpDy0ceEuKOQ6djZEIGGe+RNwvWO4Qv2bVo\n00Yk0fAqmbyKjXdH9cTwFpWiDQKBgQDPs7/0ti44f2L5f1wKfq4tzd9cUaX6yqSC\nc4naW08ZGE4HIyaAJQtJKuJ/U0ZA8LAjwuU2Kj9nhENGZVMaZvzoxiGPl3o5SNNT\npS5p18eYneFF+eTFh5tUittRGRxBU5K+NijQ3fMH18gO3pr9CdgwTOsKXH/3/3+U\nSi1qzkgbEQKBgQDVhiT0gxOli+qNhj6BMuWPpHh4WOe/W3u6mpLPq3v2/Rn99j0e\nB+Pe3MT+He9CL4uFpplQ2gtaN1NTC+lXHNzTD0O9qSXAC+F9XdzLGU65Zr/yAuFb\nS77BkqBMUW7b6FzwX3uwDBRIQKHGiUeM+ogHLdqSqhcp8GabwpiRSQfP0QKBgQCO\nCR0e6qrHBg4YEolNv/264wt45Xj8/TDs6Lf/s+tufNl3NglxHmQOYB5N9hOX+0Bo\n5DG9Db0YPDGJZWckKgOP51YyDOOPYwbpL4+C4AXljynroY1Zq3eEpASA/Av/fHhg\nTUcyNmWpGl38FSymF+JYfXFKP6FfZcDIFsXiQTi8EQKBgANG3izduAQM/7y7sHAd\nL71Pyja0DbeYt8AM5GOQ2WcegSktod8KlAACzDRwnikTwsRStbp3RtiIKuE7Fv5S\nTVYYxY/DH/3Rllo7OptYsTdJMvYGxSGBuQGMDWHLTWzOqsdDNKICrzzaoLE8gdKr\nh6gCttJN9qe+Kf2Pezw3veLi\n-----END PRIVATE KEY-----\n",
+  "client_email": "vertex-express@gifted-dreamer-494311-f6.iam.gserviceaccount.com",
+  "client_id": "105959052813607632985",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/vertex-express%40gifted-dreamer-494311-f6.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
